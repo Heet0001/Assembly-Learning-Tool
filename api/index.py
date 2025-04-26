@@ -8,12 +8,23 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Get environment variables directly from Vercel
+# Get environment variables
 CLIENT_ID = os.environ.get('CLIENT_ID')
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow requests from your Vercel domain
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://assembly-learning-platform-e1izbaen0.vercel.app",
+            "http://localhost:5173",  # For local development
+            "http://localhost:3000"   # For local development
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 @app.route('/api', methods=['GET'])
 def home():
@@ -36,7 +47,8 @@ def execute():
             return jsonify({"error": "No script provided"}), 400
         
         if not CLIENT_ID or not CLIENT_SECRET:
-            return jsonify({"output": "Mock output for testing. JDoodle credentials not properly configured."}), 200
+            logger.error("JDoodle credentials not configured")
+            return jsonify({"error": "JDoodle API credentials not properly configured"}), 500
         
         # Proceed with sending the request to JDoodle
         payload = {
@@ -48,12 +60,26 @@ def execute():
             "versionIndex": "0"
         }
         
-        response = requests.post("https://api.jdoodle.com/v1/execute", json=payload)
+        response = requests.post(
+            "https://api.jdoodle.com/v1/execute",
+            json=payload,
+            timeout=30  # Set a reasonable timeout
+        )
         response.raise_for_status()
         result = response.json()
-        return jsonify(result)
+        
+        return jsonify({
+            "output": result.get("output", ""),
+            "statusCode": result.get("statusCode", 200),
+            "memory": result.get("memory", ""),
+            "cpuTime": result.get("cpuTime", "")
+        })
+    except requests.exceptions.RequestException as e:
+        logger.error(f"JDoodle API error: {str(e)}")
+        return jsonify({"error": "Failed to execute code. Please try again later."}), 503
     except Exception as e:
-        return jsonify({"output": f"Server error occurred: {str(e)}"}), 200
+        logger.error(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 # This is important for Vercel
 app = app

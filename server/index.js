@@ -3,11 +3,9 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, join } from 'path';
 import tutorialRoutes from './routes/tutorials.js';
 import codeExecutionRoutes from './routes/codeExecution.js';
-import { BrowserRouter } from "react-router-dom";
-
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 
@@ -28,11 +26,17 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/assembly-
   .then(() => console.log('Connected to MongoDB'))
   .catch((error) => console.error('MongoDB connection error:', error));
 
+// Serve static files from the React build
+app.use(express.static(join(__dirname, '../dist')));
+
 // Routes
-<BrowserRouter future={{ v7_startTransition: true }}>
 app.use('/api/tutorials', tutorialRoutes);
 app.use('/api/code-execution', codeExecutionRoutes);
-</BrowserRouter>
+
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, '../dist/index.html'));
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -43,8 +47,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
 
 app.get('/api/generate-pdf/:id', async (req, res) => {
   const { id } = req.params;

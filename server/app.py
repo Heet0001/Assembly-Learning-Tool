@@ -13,11 +13,16 @@ CLIENT_ID = os.environ.get('CLIENT_ID')
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
 
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow requests from any origin
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/api', methods=['GET'])
 def home():
     return jsonify({"status": "Server is running"})
+
+@app.route('/api/test', methods=['GET'])
+def test():
+    return jsonify({"status": "API endpoint is working"})
 
 @app.route('/api/execute', methods=['POST'])
 def execute():
@@ -49,6 +54,7 @@ def execute():
         result = response.json()
         return jsonify(result)
     except Exception as e:
+        logger.error(f"Error in execute endpoint: {str(e)}")
         return jsonify({"output": f"Server error occurred: {str(e)}"}), 200
 
 # This is for Vercel serverless functions

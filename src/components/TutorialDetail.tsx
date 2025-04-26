@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router-dom"
-import { ArrowLeft, ChevronRight, Download, Share2, BookOpen } from "lucide-react"
+import { ArrowLeft, ChevronRight, Download, BookOpen } from "lucide-react"
 import html2pdf from "html2pdf.js"
 
 interface Tutorial {
@@ -20,8 +20,6 @@ function TutorialDetail() {
   const [tableOfContents, setTableOfContents] = useState<{ id: string; title: string; level: number }[]>([])
   const [activeTab, setActiveTab] = useState<"content" | "video">("content")
 
-
-
   const handleDownloadPDF = () => {
     if (!tutorial) return
 
@@ -34,7 +32,7 @@ function TutorialDetail() {
 
     // Format date for filename
     const currentDate = new Date()
-    const formattedDate = currentDate.toISOString().split('T')[0] // YYYY-MM-DD format
+    const formattedDate = currentDate.toISOString().split("T")[0] // YYYY-MM-DD format
 
     // PDF options with better organized filename
     const opt = {
@@ -69,7 +67,7 @@ function TutorialDetail() {
         // Update status message
         downloadStatus.style.backgroundColor = "rgba(16, 185, 129, 0.9)"
         downloadStatus.textContent = `PDF downloaded as ${opt.filename}`
-        
+
         // Remove status message after 3 seconds
         setTimeout(() => {
           downloadStatus.style.opacity = "0"
@@ -80,7 +78,7 @@ function TutorialDetail() {
         console.error("PDF download error:", error)
         downloadStatus.style.backgroundColor = "rgba(239, 68, 68, 0.9)"
         downloadStatus.textContent = "Error downloading PDF. Please try again."
-        
+
         setTimeout(() => {
           downloadStatus.style.opacity = "0"
           setTimeout(() => document.body.removeChild(downloadStatus), 300)
@@ -399,10 +397,24 @@ Result: 15</Output></pre>
         `,
       })
     } else {
-      fetch(`http://localhost:5000/api/tutorials/${id}`)
-        .then((response: Response) => response.json())
+      fetch(`/api/tutorials/${id}`)
+        .then((response: Response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`)
+          }
+          return response.json()
+        })
         .then((data: Tutorial) => setTutorial(data))
-        .catch((error: Error) => console.error("Error fetching tutorial:", error))
+        .catch((error: Error) => {
+          console.error("Error fetching tutorial:", error)
+          // Set a fallback tutorial or error state
+          setTutorial({
+            id: id || "0",
+            title: "Tutorial Not Found",
+            description: "We couldn't find the tutorial you're looking for.",
+            content: "<p>The requested tutorial could not be loaded. Please try another tutorial.</p>",
+          })
+        })
     }
   }, [id])
 
@@ -512,7 +524,6 @@ Result: 15</Output></pre>
 
             {/* Additional resources */}
             <div className="mt-8">
-             
               <div className="space-y-2">
                 <button
                   onClick={handleDownloadPDF}
@@ -521,8 +532,6 @@ Result: 15</Output></pre>
                   <Download className="h-4 w-4 mr-2" />
                   Download PDF
                 </button>
-                
-                
               </div>
             </div>
           </div>
