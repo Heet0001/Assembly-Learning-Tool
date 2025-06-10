@@ -17,7 +17,9 @@ app = Flask(__name__)
 CORS(app, resources={
     r"/api/*": {
         "origins": [
+            "https://assembly-learning-platform.vercel.app",
             "https://assembly-learning-platform-e1izbaen0.vercel.app",
+            "https://assembly-learning-platform-40e9yvh7f.vercel.app",
             "http://localhost:5173",  # For local development
             "http://localhost:3000"   # For local development
         ],

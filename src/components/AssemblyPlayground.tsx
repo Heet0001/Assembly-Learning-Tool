@@ -7,7 +7,7 @@ import { Play, RotateCcw } from "lucide-react"
 // Create an axios instance with default config
 const api = axios.create({
   baseURL: import.meta.env.PROD 
-    ? 'https://assembly-learning-platform-40e9yvh7f.vercel.app/api'
+    ? 'https://assembly-learning-platform.vercel.app/api'
     : '/api',
   headers: {
     "Content-Type": "application/json",

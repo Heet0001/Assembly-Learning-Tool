@@ -2,19 +2,33 @@
 
 import { ArrowLeft } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 function VideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoError, setVideoError] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Auto-play the video when component mounts
     if (videoRef.current) {
       videoRef.current.play().catch((error) => {
         console.error("Error playing video:", error)
+        setVideoError(true)
       })
     }
   }, [])
+
+  const handleVideoLoad = () => {
+    setIsLoading(false)
+    setVideoError(false)
+  }
+
+  const handleVideoError = () => {
+    console.error("Video failed to load")
+    setVideoError(true)
+    setIsLoading(false)
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -32,17 +46,32 @@ function VideoPlayer() {
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6">
           <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden mb-6">
-            {/* Using the local video file with the correct path */}
-            <video
-              ref={videoRef}
-              className="w-full h-[500px] object-contain bg-black"
-              controls
-              controlsList="nodownload"
-            >
-              {/* Use the correct path to the video file in the project root */}
-              <source src="/final.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {videoError ? (
+              <div className="w-full h-[500px] bg-gray-100 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-4">Video is currently unavailable</p>
+                  <p className="text-sm text-gray-500">Please check back later or contact support</p>
+                </div>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                className="w-full h-[500px] object-contain bg-black"
+                controls
+                controlsList="nodownload"
+                onLoadedData={handleVideoLoad}
+                onError={handleVideoError}
+                preload="metadata"
+              >
+                <source src="/final.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )}
+            {isLoading && !videoError && (
+              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <div className="text-white">Loading video...</div>
+              </div>
+            )}
           </div>
 
           <h2 className="text-2xl font-bold mb-4">Introduction to Assembly Language</h2>
